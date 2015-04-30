@@ -33,7 +33,7 @@ technological society.
 In the same vein that free speech was a necessary tool in the fight for the
 free societies of olde.
 
-Watch this: https://www.youtube.com/watch?v-Ag1AKIl_2GM
+Watch this: https://www.youtube.com/watch?v=Ag1AKIl_2GM
 
 I heard that Clang is better than GCC
 -------------------------------------
