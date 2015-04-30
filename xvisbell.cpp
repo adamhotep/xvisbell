@@ -37,7 +37,7 @@ const struct timeval window_timeout = {0, 100000};
 struct {
   int x, y;
   int w, h;
-} geometry = {0, 0, -1, 16};
+} geometry = {0, 0, -1, -1};
 
 bool operator<(const struct timeval & a,
                const struct timeval & b) {
