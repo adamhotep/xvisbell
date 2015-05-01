@@ -25,6 +25,7 @@
 
 #include <iostream>
 #include <stdexcept>
+#include <string.h>
 
 #include <cstdlib>
 
@@ -78,7 +79,29 @@ struct timeval operator-(const struct timeval & a,
   return toret;
 }
 
-int main() {
+int main(int argc, char *argv[]) {
+  bool once_only = false;
+  if (argc >= 1) {
+    if (strcmp(argv[1], "--once") == 0) {
+      once_only = true;
+    } else {
+      FILE *out = stderr;
+      if (strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0) {
+        out = stdout;
+      } else {
+        fprintf(out, "%s: unrecognized option '%s'\n", argv[0], argv[1]);
+      }
+      fprintf(out, "Usage: %s [--once]\n", argv[0]);
+      if (out == stdout) {
+        fprintf(out, "  --once        quit after first bell\n");
+        exit(0);
+      } else {
+        fprintf(out, "Try '%s --help' for more information.\n", argv[0]);
+        exit(2);
+      }
+    }
+  }
+
   auto dpy = XOpenDisplay(nullptr);
   if (!dpy) {
     throw std::runtime_error("XOpenDisplay() error");
@@ -160,6 +183,9 @@ int main() {
     }
 
     if (timeout_is_set) {
+      if (once_only) {
+        break;
+      }
       struct timeval cur_time;
       if (gettimeofday(&cur_time, nullptr) < 0) {
         throw std::runtime_error("getttimeofday() error!");
