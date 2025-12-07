@@ -25,7 +25,6 @@
 
 #include <iostream>
 #include <stdexcept>
-#include <string.h>
 
 #include <cstdlib>
 
@@ -42,51 +41,29 @@ struct {
 
 bool operator<(const struct timeval & a,
                const struct timeval & b) {
-  return (a.tv_sec == b.tv_sec
-          ? a.tv_usec < b.tv_usec
-          : a.tv_sec < b.tv_sec);
+  return timercmp(&a, &b, <);
 }
 
 struct timeval & operator+=(struct timeval & a, const struct timeval & b) {
-  a.tv_usec += b.tv_usec;
-  a.tv_sec += b.tv_sec;
-
-  if (std::abs(a.tv_usec) >= 1000000) {
-    a.tv_sec += a.tv_usec / 1000000;
-    a.tv_usec %= 1000000;
-  }
-
-  if (a.tv_usec < 0 && a.tv_sec > 0) {
-    a.tv_usec += 1000000;
-    a.tv_sec -= 1;
-  }
-  else if (a.tv_usec > 0 && a.tv_sec < 0) {
-    a.tv_usec -= 1000000;
-    a.tv_sec += 1;
-  }
-
+  timeradd(&a, &b, &a);
   return a;
-}
-
-struct timeval operator-(const struct timeval & a) {
-  return {-a.tv_sec, -a.tv_usec};
 }
 
 struct timeval operator-(const struct timeval & a,
                          const struct timeval & b) {
-  struct timeval toret = a;
-  toret += -b;
+  struct timeval toret;
+  timersub(&a, &b, &toret);
   return toret;
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char **argv) {
   bool once_only = false;
-  if (argc >= 1) {
-    if (strcmp(argv[1], "--once") == 0) {
+  if (argc > 1) {
+    if (std::string(argv[1]) == "--once") {
       once_only = true;
     } else {
       FILE *out = stderr;
-      if (strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0) {
+      if (std::string(argv[1]) == "-h" || std::string(argv[1]) == "--help") {
         out = stdout;
       } else {
         fprintf(out, "%s: unrecognized option '%s'\n", argv[0], argv[1]);
@@ -172,14 +149,18 @@ int main(int argc, char *argv[]) {
       }
 
       // c++ magic, in your face linus!
-      tv = future_wakeup - cur_time;
+      tv = (future_wakeup < cur_time
+            ? timeval{0, 0}
+            : future_wakeup - cur_time);
       wait_tv = &tv;
     }
 
-    // we could erroneously error out due to EINTR
-    // not handling for now
-    if (select(x11_fd + 1, &in_fds, nullptr, nullptr, wait_tv) < 0) {
-      throw std::runtime_error("select() error!");
+    while (true) {
+      if (select(x11_fd + 1, &in_fds, nullptr, nullptr, wait_tv) < 0) {
+        if (errno == EINTR) continue;
+        throw std::runtime_error("select() error!");
+      }
+      break;
     }
 
     if (timeout_is_set) {
