@@ -59,11 +59,12 @@ struct timeval operator-(const struct timeval & a,
 int main(int argc, char **argv) {
   bool once_only = false;
   if (argc > 1) {
-    if (std::string(argv[1]) == "--once") {
+    std::string arg = argv[1];
+    if (arg == "--once") {
       once_only = true;
     } else {
       FILE *out = stderr;
-      if (std::string(argv[1]) == "-h" || std::string(argv[1]) == "--help") {
+      if (arg == "-h" || arg == "--help") {
         out = stdout;
       } else {
         fprintf(out, "%s: unrecognized option '%s'\n", argv[0], argv[1]);
