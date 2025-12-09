@@ -33,7 +33,7 @@
 #include <sys/select.h>
 #include <sys/time.h>
 
-const char *VERSION = "20251209.0";
+const char *VERSION = "20251209.1";
 
 const struct timeval window_timeout = {0, 100000};
 
@@ -131,20 +131,22 @@ int main(int argc, char **argv) {
 
   int i = 0;
   auto needs_arg = [&]() {
-    fprintf(stderr, "%s: %s requires an argument\n", argv[0], argv[i]);
-    exit(2);
+    if (i + 1 >= argc) {
+      fprintf(stderr, "%s: %s requires an argument\n", argv[0], argv[i]);
+      exit(2);
+    }
   };
 
   while (++i < argc) {
     std::string arg = argv[i];
     if (arg == "--color") {
-      if (i+1 >= argc) { needs_arg(); }
+      needs_arg();
       color = argv[++i];
     } else if (arg == "--flash") {
-      if (i+1 >= argc) { needs_arg(); }
+      needs_arg();
       flash = parse_count(argv[++i]);
     } else if (arg == "--geometry" || arg == "--geom") {
-      if (i+1 >= argc) { needs_arg(); }
+      needs_arg();
       if (!parse_geometry(argv[++i])) {
         fprintf(stderr, "%s: --geometry could not be parsed from `%s`\n",
           argv[0], argv[i]);
@@ -153,14 +155,14 @@ int main(int argc, char **argv) {
     } else if (arg == "--once") {
       flash = 1;
     } else if (arg == "--time") {
-      if (i+1 >= argc) { needs_arg(); }
+      needs_arg();
       ms = parse_count(argv[++i]);
     } else {
       FILE *out = stderr;
       if (arg == "-h" || arg == "--help") {
         out = stdout;
       } else {
-        fprintf(out, "%s: unrecognized option '%s'\n", argv[0], argv[1]);
+        fprintf(out, "%s: unrecognized option '%s'\n", argv[0], argv[i]);
       }
       fprintf(out, "Usage: %s [OPTIONS]\n", argv[0]);
       if (out == stdout) {
